@@ -1,0 +1,42 @@
+:root {
+  --text: #3f3d45;
+  --bg: #ffffff;
+  --ok: #15803d;
+  --error: #b91c1c;
+
+  font:
+    16px/1.5 system-ui,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --bg: #16171d;
+    --ok: #4ade80;
+    --error: #f87171;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+[data-status='ok'] {
+  color: var(--ok);
+}
+
+[data-status='unreachable'] {
+  color: var(--error);
+}
