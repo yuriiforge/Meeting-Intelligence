@@ -17,7 +17,7 @@ model (Ollama) for development, Claude for production.
   [key technical decisions](#key-technical-decisions),
   [productionization](#productionization),
   [engineering standards](#engineering-standards),
-  [AI tool usage](#ai-tool-usage), [with more time](#with-more-time)
+  [with more time](#with-more-time)
 
 ## Screenshots
 
@@ -448,22 +448,6 @@ What real users would need next, roughly in order:
   floor. Ranking ties are broken deterministically so results are stable.
 - Small, focused commits, one step each (Conventional Commits style from the
   first features on).
-
-## AI tool usage
-
-I built this with Claude Code as a pair programmer, working in small steps and
-committing each step myself after reviewing it. I made the main decisions:
-React + NestJS, Prisma, a local model for development with the real API as the
-production path, the scope of each step, and dropping paid hosting. Claude
-wrote most of the code, tests and documentation, including drafts of these
-README sections from my notes.
-
-I checked its work by running the stack, the tests and the retrieval eval, and
-by reviewing the UI in screenshots. That caught real mistakes: escaping bugs (a
-regex losing its backslashes, `$$` in the compose file), nondeterministic
-ranking ties, a prompt example that the small model copied into answers, and
-wrong free-tier limits for Oracle Cloud (4 OCPU / 24 GB instead of 2 / 12),
-which I corrected from Oracle's documentation.
 
 ## With more time
 
