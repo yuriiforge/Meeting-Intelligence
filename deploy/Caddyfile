@@ -1,0 +1,21 @@
+# Public entry point: automatic HTTPS (Let's Encrypt) for $DOMAIN, a shared
+# password for the whole demo, and a reverse proxy to the web container
+# (which serves the UI and proxies /api to the backend).
+
+{$DOMAIN} {
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+
+	reverse_proxy web:80 {
+		# Send chat answers to the browser token by token, without buffering.
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

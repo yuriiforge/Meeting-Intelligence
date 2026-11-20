@@ -1,0 +1,54 @@
+# Production overrides for running the whole stack on one VM.
+# Used by deploy/deploy.sh:
+#   docker compose -f compose.yaml -f deploy/compose.prod.yaml --env-file deploy/.env up -d --build
+#
+# Differences from local development:
+# - Caddy is the only thing reachable from the internet (HTTPS + password).
+# - Postgres, Ollama and the web container no longer publish ports.
+# - Everything restarts automatically after a crash or VM reboot.
+
+services:
+  caddy:
+    image: caddy:2.11.9-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80' # Let's Encrypt challenge + redirect to HTTPS
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in deploy/.env}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:?set BASIC_AUTH_USER in deploy/.env}
+      # bcrypt hash, computed from BASIC_AUTH_PASSWORD by deploy.sh
+      BASIC_AUTH_HASH: ${BASIC_AUTH_HASH:?run deploy/deploy.sh instead of docker compose directly}
+    volumes:
+      # Paths are relative to the project directory (the repo root).
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data # certificates: keep them, or Let's Encrypt rate limits bite
+      - caddy-config:/config
+    depends_on:
+      - web
+
+  db:
+    restart: unless-stopped
+    ports: !reset []
+
+  ollama:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      # Keep models in memory instead of unloading after 5 idle minutes:
+      # no reload delay on the first question, and the VM's memory use stays
+      # above Oracle's 20% "idle instance" threshold.
+      OLLAMA_KEEP_ALIVE: '-1'
+
+  api:
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+  web:
+    restart: unless-stopped
+    ports: !reset []
+
+volumes:
+  caddy-data:
+  caddy-config:
