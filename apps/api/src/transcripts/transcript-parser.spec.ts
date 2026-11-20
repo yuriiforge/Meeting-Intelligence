@@ -74,7 +74,8 @@ describe('parseTranscript', () => {
 
     it('handles Windows line endings and a UTF-8 BOM', () => {
       const { utterances } = parseTranscript(
-        '﻿[00:00:01] Alice: one\r\n[00:00:02] Bob: two\r\n',
+        String.fromCharCode(0xfeff) +
+          '[00:00:01] Alice: one\r\n[00:00:02] Bob: two\r\n',
       );
 
       expect(utterances.map((u) => u.text)).toEqual(['one', 'two']);

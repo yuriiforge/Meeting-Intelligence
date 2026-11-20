@@ -63,7 +63,9 @@ const MARKDOWN_TITLE = /^#\s+(?<value>.+)$/;
  * Throws TranscriptParseError when no speaker turns can be found.
  */
 export function parseTranscript(source: string): ParsedTranscript {
-  const lines = source.replace(/^﻿/, '').split(/\r?\n/);
+  // Drop a UTF-8 byte order mark, which some editors put at the file start.
+  const text = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source;
+  const lines = text.split(/\r?\n/);
   const metadata: TranscriptMetadata = {};
   const utterances: SourcedUtterance[] = [];
   const warnings: ParseIssue[] = [];
