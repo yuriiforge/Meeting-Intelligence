@@ -16,7 +16,10 @@
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "db:up": "docker compose up -d db"
   },
   "devDependencies": {
     "concurrently": "^9.2.5",

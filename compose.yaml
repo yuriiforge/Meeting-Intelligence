@@ -1,0 +1,43 @@
+# Full stack: `docker compose up --build`, then open http://localhost:8080
+# Database only (for `npm run dev`): `docker compose up -d db`
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mi}
+      POSTGRES_DB: ${POSTGRES_DB:-meeting_intelligence}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mi}:${POSTGRES_PASSWORD:-mi}@db:5432/${POSTGRES_DB:-meeting_intelligence}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:
