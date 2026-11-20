@@ -4,6 +4,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { Meeting } from '../generated/prisma/client.js';
+import { IndexingService } from '../indexing/indexing.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { chunkUtterances } from '../transcripts/chunker.js';
 import {
@@ -26,13 +27,17 @@ export interface IngestInput {
 
 @Injectable()
 export class MeetingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly indexing: IndexingService,
+  ) {}
 
   /**
    * Parses and stores a transcript: the meeting, every utterance and every
    * chunk, in one transaction, so a failure never leaves a half-saved meeting.
    *
-   * Embedding is a separate step, so meetings start as PENDING.
+   * Embedding runs in the background: the meeting is returned as PENDING
+   * and becomes READY (or FAILED) once its chunks are embedded.
    */
   async ingest(input: IngestInput): Promise<IngestResult> {
     const parsed = this.parse(input.content);
@@ -52,6 +57,7 @@ export class MeetingsService {
         chunks: { createMany: { data: chunks } },
       },
     });
+    this.indexing.enqueue(meeting.id);
 
     return {
       ...toSummary(meeting, {
@@ -113,6 +119,27 @@ export class MeetingsService {
     };
   }
 
+  /** Re-runs embedding, e.g. after a FAILED attempt while Ollama was down. */
+  async reindex(id: string): Promise<MeetingSummary> {
+    const exists = await this.prisma.meeting.count({ where: { id } });
+    if (exists === 0) {
+      throw new NotFoundException(`Meeting ${id} not found`);
+    }
+    await this.prisma.meeting.update({
+      where: { id },
+      data: { status: 'PENDING', error: null },
+    });
+    // Read before queueing: the job may start (and change status) right away.
+    const summary = await this.summary(id);
+    this.indexing.enqueue(id);
+    return summary;
+  }
+
+  private async summary(id: string): Promise<MeetingSummary> {
+    const { utterances: _, ...summary } = await this.get(id);
+    return summary;
+  }
+
   private parse(content: string): ParsedTranscript {
     try {
       return parseTranscript(content);
@@ -156,6 +183,7 @@ function toSummary(
     id: meeting.id,
     title: meeting.title,
     status: meeting.status,
+    error: meeting.error,
     occurredAt: meeting.occurredAt?.toISOString() ?? null,
     durationSeconds: meeting.durationSeconds,
     sourceFilename: meeting.sourceFilename,

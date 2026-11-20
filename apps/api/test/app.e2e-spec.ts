@@ -14,6 +14,9 @@ describe('API (e2e)', () => {
     $connect: vi.fn(),
     $disconnect: vi.fn(),
     $queryRaw: vi.fn(),
+    // Startup queries: resume unfinished indexing, check the embedding model.
+    meeting: { findMany: vi.fn().mockResolvedValue([]) },
+    chunk: { findMany: vi.fn().mockResolvedValue([]) },
   };
 
   beforeEach(async () => {

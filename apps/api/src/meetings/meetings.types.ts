@@ -5,6 +5,8 @@ export interface MeetingSummary {
   id: string;
   title: string;
   status: MeetingStatus;
+  /** Why indexing failed, when status is FAILED. */
+  error: string | null;
   occurredAt: string | null;
   durationSeconds: number | null;
   sourceFilename: string | null;

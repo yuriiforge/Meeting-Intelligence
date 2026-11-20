@@ -26,26 +26,36 @@ docker compose up --build
 
 Open http://localhost:8080. This starts, in order:
 
-| Service   | What it is                                       | Host port |
-| --------- | ------------------------------------------------ | --------- |
-| `db`      | Postgres 17 with pgvector                        | 5432      |
-| `migrate` | One-off job: applies migrations, then exits      | —         |
-| `api`     | NestJS backend (starts after `migrate` succeeds) | —         |
-| `web`     | nginx serving the built SPA, proxying `/api`     | 8080      |
+| Service       | What it is                                         | Host port |
+| ------------- | -------------------------------------------------- | --------- |
+| `db`          | Postgres 17 with pgvector                          | 5432      |
+| `ollama`      | Local model server (embeddings), CPU               | 11434     |
+| `ollama-pull` | One-off job: downloads `nomic-embed-text` (274 MB) | —         |
+| `migrate`     | One-off job: applies migrations, then exits        | —         |
+| `api`         | NestJS backend (starts after both jobs succeed)    | —         |
+| `web`         | nginx serving the built SPA, proxying `/api`       | 8080      |
+
+The first run downloads the Ollama image (~3.4 GB) and the embedding model.
+Later runs start in seconds.
 
 Ports and credentials have defaults; copy `.env.example` to `.env` to change them.
 
 ### Local development (hot reload)
 
-Requires Node.js 24+ and Docker (for the database).
+Requires Node.js 24+ and Docker (for Postgres and Ollama).
 
 ```bash
 npm install                                # also generates the Prisma client
-cp apps/api/.env.example apps/api/.env     # DATABASE_URL for local dev
-npm run db:up                              # Postgres only, in Docker
+cp apps/api/.env.example apps/api/.env     # local connection settings
+npm run deps:up                            # Postgres + Ollama (+ model download)
 npm run db:migrate                         # apply migrations
 npm run dev                                # api on :3000, web on :5173
 ```
+
+Ollama in Docker runs on CPU only. A [native install](https://ollama.com/download)
+can use your GPU and is usually faster. Run `ollama pull nomic-embed-text`, then
+start only Postgres with `npm run db:up`. `OLLAMA_BASE_URL` already points at
+`localhost:11434`.
 
 Open http://localhost:5173. The page shows the API and database health.
 
@@ -64,6 +74,18 @@ Schema: [`apps/api/prisma/schema.prisma`](apps/api/prisma/schema.prisma)
 
 To change the schema, edit `schema.prisma`, then run `npm run db:migrate`.
 That command creates and applies a new migration.
+
+## Indexing
+
+After an upload the meeting is `PENDING`. A background job embeds its chunks
+with `nomic-embed-text` and moves it to `READY`, or to `FAILED` with the
+error, for example when Ollama is down. `POST /api/meetings/:id/index` retries.
+
+- Jobs run one at a time, in-process. Unfinished meetings are re-queued when
+  the api starts, so a restart loses nothing.
+- Every vector is stored with the model that produced it. The api refuses to
+  start if `EMBEDDING_MODEL` doesn't match the stored vectors, because vectors
+  from different models can't be compared.
 
 ## Transcripts
 
@@ -87,12 +109,13 @@ fictional product team, useful for trying questions across meetings.
 
 ### API
 
-| Method | Path                | What it does                                              |
-| ------ | ------------------- | --------------------------------------------------------- |
-| `POST` | `/api/meetings`     | Upload a transcript (multipart: `file`, optional `title`) |
-| `GET`  | `/api/meetings`     | List meetings, most recent first                          |
-| `GET`  | `/api/meetings/:id` | One meeting with its full transcript                      |
-| `GET`  | `/api/health`       | API and database health                                   |
+| Method | Path                      | What it does                                              |
+| ------ | ------------------------- | --------------------------------------------------------- |
+| `POST` | `/api/meetings`           | Upload a transcript (multipart: `file`, optional `title`) |
+| `POST` | `/api/meetings/:id/index` | Re-run embedding (e.g. after `FAILED`)                    |
+| `GET`  | `/api/meetings`           | List meetings, most recent first                          |
+| `GET`  | `/api/meetings/:id`       | One meeting with its full transcript                      |
+| `GET`  | `/api/health`             | API and database health                                   |
 
 ```bash
 curl -F "file=@samples/transcripts/2026-11-03-mobile-2-0-kickoff.txt" \
@@ -124,5 +147,6 @@ created and migrated automatically and emptied before each test.
 | `npm run docker:up`           | Build and run the full stack        |
 | `npm run docker:down`         | Stop the full stack                 |
 | `npm run db:up`               | Start only Postgres                 |
+| `npm run deps:up`             | Start Postgres and Ollama           |
 | `npm run db:migrate`          | Create/apply migrations (dev)       |
 | `npm run db:studio`           | Browse the database (Prisma Studio) |

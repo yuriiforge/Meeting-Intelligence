@@ -1,5 +1,5 @@
 # Full stack: `docker compose up --build`, then open http://localhost:8080
-# Database only (for `npm run dev`): `docker compose up -d db`
+# Dependencies only (for `npm run dev`): `npm run deps:up` (db + ollama)
 
 x-database-url: &database-url postgresql://${POSTGRES_USER:-mi}:${POSTGRES_PASSWORD:-mi}@db:5432/${POSTGRES_DB:-meeting_intelligence}
 
@@ -19,6 +19,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Local model server for embeddings (and, later, the dev LLM). CPU-only here;
+  # a native Ollama install is usually faster on Windows/macOS (see README).
+  ollama:
+    image: ollama/ollama:0.40.16
+    ports:
+      - '${OLLAMA_PORT:-11434}:11434'
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Downloads the embedding model into the shared volume once, then exits.
+  # Instant on later runs: the model is already there.
+  ollama-pull:
+    image: ollama/ollama:0.40.16
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    command: ['pull', '${EMBEDDING_MODEL:-nomic-embed-text}']
+    depends_on:
+      ollama:
+        condition: service_healthy
 
   # Applies database migrations once, then exits.
   migrate:
@@ -40,8 +65,12 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: *database-url
+      OLLAMA_BASE_URL: http://ollama:11434
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
     depends_on:
       migrate:
+        condition: service_completed_successfully
+      ollama-pull:
         condition: service_completed_successfully
 
   web:
@@ -56,3 +85,4 @@ services:
 
 volumes:
   db-data:
+  ollama-models:

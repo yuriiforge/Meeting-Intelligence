@@ -1,11 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
-import { AppModule } from '../../src/app.module.js';
-import { configureApp } from '../../src/app.setup.js';
 import { MAX_TRANSCRIPT_BYTES } from '../../src/meetings/meetings.controller.js';
 import type {
   IngestResult,
@@ -13,6 +10,7 @@ import type {
   MeetingSummary,
 } from '../../src/meetings/meetings.types.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
+import { createTestApp, resetDatabase } from '../support/test-app.js';
 
 const SAMPLES = join(import.meta.dirname, '../../../../samples/transcripts');
 const KICKOFF = '2026-11-03-mobile-2-0-kickoff.txt';
@@ -30,16 +28,12 @@ describe('Meetings API (integration, real database)', () => {
       .attach('file', Buffer.from(content), filename);
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = configureApp(moduleRef.createNestApplication());
-    await app.init();
+    app = await createTestApp();
     prisma = app.get(PrismaService);
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE meetings CASCADE`;
+    await resetDatabase(app);
   });
 
   afterAll(async () => {

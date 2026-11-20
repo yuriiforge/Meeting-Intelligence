@@ -13,6 +13,15 @@ export const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// or postgresql:// URL'),
+
+  /** Which embedding backend to use. Only Ollama for now; the interface allows more. */
+  EMBEDDING_PROVIDER: z.enum(['ollama']).default('ollama'),
+  /**
+   * Must produce 768-dim vectors (the `chunks.embedding` column type).
+   * Changing it requires re-embedding; startup refuses a mismatch.
+   */
+  EMBEDDING_MODEL: z.string().min(1).default('nomic-embed-text'),
+  OLLAMA_BASE_URL: z.url().default('http://localhost:11434'),
 });
 
 export type Env = z.infer<typeof envSchema>;

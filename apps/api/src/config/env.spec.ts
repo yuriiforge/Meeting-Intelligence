@@ -6,7 +6,26 @@ describe('validateEnv', () => {
   it('applies defaults', () => {
     const env = validateEnv({ DATABASE_URL });
 
-    expect(env).toEqual({ NODE_ENV: 'development', PORT: 3000, DATABASE_URL });
+    expect(env).toEqual({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      DATABASE_URL,
+      EMBEDDING_PROVIDER: 'ollama',
+      EMBEDDING_MODEL: 'nomic-embed-text',
+      OLLAMA_BASE_URL: 'http://localhost:11434',
+    });
+  });
+
+  it('rejects an unknown EMBEDDING_PROVIDER', () => {
+    expect(() =>
+      validateEnv({ DATABASE_URL, EMBEDDING_PROVIDER: 'magic' }),
+    ).toThrow(/EMBEDDING_PROVIDER/);
+  });
+
+  it('rejects a malformed OLLAMA_BASE_URL', () => {
+    expect(() =>
+      validateEnv({ DATABASE_URL, OLLAMA_BASE_URL: 'not a url' }),
+    ).toThrow(/OLLAMA_BASE_URL/);
   });
 
   it('coerces PORT from a string', () => {

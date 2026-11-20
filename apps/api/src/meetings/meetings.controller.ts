@@ -3,6 +3,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   UnsupportedMediaTypeException,
@@ -63,6 +65,15 @@ export class MeetingsController {
   @Get()
   list(): Promise<MeetingSummary[]> {
     return this.meetings.list();
+  }
+
+  /** Queues the meeting for (re-)embedding; poll GET /:id for the status. */
+  @Post(':id/index')
+  @HttpCode(HttpStatus.ACCEPTED)
+  reindex(
+    @Param('id', { schema: meetingIdSchema }) id: string,
+  ): Promise<MeetingSummary> {
+    return this.meetings.reindex(id);
   }
 
   @Get(':id')
