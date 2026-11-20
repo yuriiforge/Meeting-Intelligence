@@ -5,12 +5,14 @@ import { validateEnv } from './config/env.js';
 import { HealthController } from './health/health.controller.js';
 import { MeetingsModule } from './meetings/meetings.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { RetrievalModule } from './retrieval/retrieval.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     PrismaModule,
     MeetingsModule,
+    RetrievalModule,
   ],
   controllers: [HealthController],
   providers: [

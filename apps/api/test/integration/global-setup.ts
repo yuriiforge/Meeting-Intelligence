@@ -2,7 +2,13 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import pg from 'pg';
 
-/** Creates the test database if needed and applies all migrations to it. */
+/**
+ * Creates the test database if needed, applies all migrations, and empties it.
+ *
+ * Emptying here, before any app boots, matters: suites use different
+ * embedding models (fake in tests, real in the eval), and the app refuses to
+ * start on vectors from another model. No run depends on what the last left.
+ */
 export default async function setup(): Promise<void> {
   const url = new URL(requireEnv('TEST_DATABASE_URL'));
   const database = url.pathname.slice(1);
@@ -19,6 +25,18 @@ export default async function setup(): Promise<void> {
     env: { ...process.env, DATABASE_URL: url.toString() },
     stdio: 'pipe',
   });
+
+  await truncateAll(url);
+}
+
+async function truncateAll(url: URL) {
+  const client = new pg.Client({ connectionString: url.toString() });
+  await client.connect();
+  try {
+    await client.query('TRUNCATE TABLE meetings CASCADE');
+  } finally {
+    await client.end();
+  }
 }
 
 async function createDatabaseIfMissing(url: URL, database: string) {

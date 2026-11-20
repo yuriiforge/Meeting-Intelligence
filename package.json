@@ -16,6 +16,7 @@
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces --if-present",
     "test:int": "npm run test:int -w @mi/api",
+    "eval:retrieval": "npm run eval:retrieval -w @mi/api",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docker:up": "docker compose up --build",
@@ -23,7 +24,8 @@
     "db:up": "docker compose up -d db",
     "deps:up": "docker compose up -d db ollama ollama-pull",
     "db:migrate": "npm run db:migrate -w @mi/api",
-    "db:studio": "npm run db:studio -w @mi/api"
+    "db:studio": "npm run db:studio -w @mi/api",
+    "db:drift": "npm run db:drift -w @mi/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.5",

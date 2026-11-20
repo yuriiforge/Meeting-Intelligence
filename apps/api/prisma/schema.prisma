@@ -72,9 +72,13 @@ model Chunk {
   embedding      Unsupported("vector(768)")?
   /// Recorded per row so a model/config mismatch can be detected at startup.
   embeddingModel String?                     @map("embedding_model")
+  /// Full-text index of `content`, computed by Postgres (GENERATED ... STORED,
+  /// see the hybrid_search migration). Never written by the app.
+  searchVector   Unsupported("tsvector")?    @default(dbgenerated("to_tsvector('english'::regconfig, content)")) @map("search_vector")
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, sequence])
+  @@index([searchVector], type: Gin)
   @@map("chunks")
 }
