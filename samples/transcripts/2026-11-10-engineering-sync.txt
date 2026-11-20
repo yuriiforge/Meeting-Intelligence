@@ -1,0 +1,30 @@
+Title: Mobile 2.0 engineering sync
+Date: 2026-11-10
+
+[00:02] Marcus Chen: Let's get going. Main topic is the offline mode estimate, then the payments SDK thing, then QA.
+[00:10] Marcus Chen: So, offline. I spent Thursday and Friday on a spike with Jin. Read-only offline caching is about one week. Editing offline with sync and conflict resolution is the problem. Realistically that's four to five weeks including edge cases.
+[00:31] Jin Park: The hard part is when two people edit the same report while one of them is offline. We either do last-write-wins, which loses data, or we build a proper merge UI. Customers will hate losing data.
+[00:47] Priya Shah: Four to five weeks puts us well past December 8th.
+[00:52] Marcus Chen: Yes. If we keep full offline editing in 2.0, I'd estimate mid to late January for launch.
+[01:01] Priya Shah: That kills the holiday launch. What are the options?
+[01:05] Marcus Chen: Option one, ship 2.0 with read-only offline and move offline editing to 2.1. Option two, keep everything and launch in January.
+[01:17] Tom Becker: From a quality point of view, option one is much safer. Read-only offline is a fraction of the test matrix.
+[01:25] Priya Shah: My gut says option one, but this changes what we promised customers, so it's Dana's call. I'll bring it to the go/no-go review next week.
+[01:36] Marcus Chen: Fair. In the meantime we'll start on read-only offline since we need it either way.
+[01:43] Priya Shah: Agreed.
+[01:46] Marcus Chen: Next, payments SDK. I read the vendor email. The version we use stops working on December 1st. Not deprecated, actually switched off. We have to upgrade before then regardless of the launch.
+[02:01] Jin Park: The upgrade touches checkout and refunds. I'd say three to four days of dev work, but it needs a full regression pass on payments.
+[02:11] Tom Becker: That regression pass is about three days for us, and it lands right on top of 2.0 testing.
+[02:18] Priya Shah: So the SDK upgrade is non-negotiable and it eats into our testing time.
+[02:23] Marcus Chen: Correct. I'll have Jin start the upgrade this week so it's done well before December 1st.
+[02:30] Jin Park: I can start tomorrow. I'll ship it behind a feature flag so we can roll back.
+[02:36] Priya Shah: Good. Tom, how are the devices?
+[02:39] Tom Becker: I sent Priya the list Wednesday, six devices, mostly mid-range Android plus one older iPhone.
+[02:46] Priya Shah: Budget got approved Friday. I'll place the order today, they should arrive within a week.
+[02:53] Tom Becker: Great. Then I can start building the offline test scenarios this week on the devices we have.
+[03:00] Marcus Chen: Push notifications are on track by the way. The backend is done, we're wiring up the app side. Elena's onboarding mockups came in this morning too.
+[03:10] Priya Shah: Yes, I saw them, they look great. Elena is running the usability sessions on Wednesday.
+[03:16] Marcus Chen: Last thing. Priya, did legal say anything about the push consent text?
+[03:21] Priya Shah: Not yet, still waiting. I'll chase them today.
+[03:25] Marcus Chen: Okay. Action items then. Jin does the SDK upgrade behind a flag, target done by November 24th. Tom builds the offline test scenarios. Priya orders devices, chases legal, and takes the offline scope question to Dana.
+[03:41] Priya Shah: That's everything. Thanks all.

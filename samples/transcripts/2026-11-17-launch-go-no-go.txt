@@ -1,0 +1,39 @@
+Title: Mobile 2.0 launch go/no-go review
+Date: 2026-11-17
+
+[00:00:02] Dana Wu: Okay, let's do this. I've read Priya's summary. I want to leave this meeting with a decision on scope and a date we actually believe in.
+[00:00:12] Priya Shah: Thanks Dana. Quick recap. Onboarding and push are on track. Offline editing turned out to be four to five weeks of work because of sync conflicts. Read-only offline is about one week and already in progress.
+[00:00:28] Dana Wu: And the question is whether we cut offline editing from 2.0.
+[00:00:32] Priya Shah: Yes. My recommendation is to ship read-only offline in 2.0 and move offline editing to 2.1, targeting February.
+[00:00:41] Dana Wu: Marcus, Tom, do you agree?
+[00:00:43] Marcus Chen: Yes. Rushing conflict resolution is how you lose customer data. I'd rather do it properly in 2.1.
+[00:00:50] Tom Becker: Agreed. Testing offline editing properly in the time we have isn't possible.
+[00:00:56] Dana Wu: Okay. I don't love it, because customers asked for editing, but losing data would be far worse. Decision: offline editing moves to 2.1, 2.0 ships with read-only offline. Priya, please update the roadmap and let the customer advisory board know before they hear it elsewhere.
+[00:01:14] Priya Shah: Will do.
+[00:01:16] Dana Wu: Now the date. Are we still on December 8th?
+[00:01:19] Marcus Chen: That's the other problem. The payments SDK upgrade is mandatory, the old version gets switched off December 1st. Jin finished the code on Friday, but it needs a full payments regression, which overlaps with 2.0 testing.
+[00:01:34] Tom Becker: With the SDK regression plus 2.0 testing, and the new devices only arriving this week, December 8th means cutting testing short. I'm not comfortable with that.
+[00:01:45] Dana Wu: What date would you be comfortable with?
+[00:01:48] Tom Becker: December 15th. That gives us one extra week.
+[00:01:52] Sam Okafor: December 15th is the latest I'd go for marketing. Anything after that and we wait until January.
+[00:01:58] Dana Wu: Then December 15th it is. Decision: launch date moves from December 8th to December 15th. And that's a hard date, if we're not ready we cut scope, we don't slip again.
+[00:02:10] Marcus Chen: Understood.
+[00:02:12] Sam Okafor: I'll update the launch plan and shift the press embargo to the 15th. I need to tell our PR agency by Friday.
+[00:02:20] Dana Wu: Good. What about the invite link thing from the usability study?
+[00:02:24] Marcus Chen: Elena wrote it up. It's about three days of backend work. We can fit it in if read-only offline goes smoothly.
+[00:02:31] Dana Wu: Let's make it a stretch goal for 2.0 then, not a commitment.
+[00:02:35] Priya Shah: Okay, invite links are a stretch goal.
+[00:02:38] Dana Wu: Pricing. Sales asked if 2.0 should introduce a paid tier for push notifications.
+[00:02:43] Priya Shah: I'd say no. Push is part of fixing engagement, putting it behind a paywall defeats the purpose.
+[00:02:50] Dana Wu: I agree. Decision: no pricing changes with 2.0, push notifications stay in all plans.
+[00:02:56] Sam Okafor: One open question. Do we want a beta first? Something like releasing to five percent of users a week early?
+[00:03:03] Marcus Chen: Technically we can do a staged rollout in the app stores.
+[00:03:07] Tom Becker: A staged rollout would make me a lot more comfortable.
+[00:03:10] Dana Wu: I like the idea but I want to understand the support impact first. Let's not decide today. Priya, can you look at that with the support team and come back to me?
+[00:03:19] Priya Shah: Yes, I'll come back by next Monday.
+[00:03:22] Dana Wu: What about legal and the push consent text, is that sorted?
+[00:03:26] Priya Shah: Legal replied on Friday. They want an explicit opt-in screen with a link to the privacy policy, which matches Elena's in-context prompt. So we're fine.
+[00:03:36] Dana Wu: Great. Let's recap the actions.
+[00:03:39] Priya Shah: I update the roadmap and tell the customer advisory board about offline editing moving to 2.1. I also look into the staged rollout with support and report back by Monday. Sam updates the launch plan and tells the PR agency about the 15th by Friday. Tom finalizes the regression test plan, including the payments SDK, by November 24th. Marcus confirms whether invite links fit as a stretch goal.
+[00:04:04] Tom Becker: November 24th for the test plan works.
+[00:04:07] Dana Wu: Thanks everyone. Good discussion, and good call on not rushing the offline work.

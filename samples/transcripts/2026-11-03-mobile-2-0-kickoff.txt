@@ -1,0 +1,42 @@
+Title: Mobile 2.0 kickoff and planning
+Date: 2026-11-03
+
+[00:00:04] Priya Shah: Okay, I think everyone's here. Thanks for joining. This is the kickoff for Tidewater Mobile 2.0, so the goal today is to agree on scope, a target date, and who owns what.
+[00:00:19] Marcus Chen: Sounds good. Before we start, is Dana joining?
+[00:00:23] Priya Shah: Dana sends apologies, she's at the board offsite. She asked me to bring the scope back to her for sign-off.
+[00:00:31] Priya Shah: So, quick context. Customer research from Q3 gave us three big themes. People want to use the app on job sites with bad connectivity, the onboarding is too long, and they miss updates because we have no push notifications.
+[00:00:52] Elena Rossi: The onboarding numbers are honestly rough. We lose about forty percent of new users before they finish setup. Most of them drop on the permissions screens.
+[00:01:05] Priya Shah: Right. So my proposal for 2.0 is three features. Offline mode, the redesigned onboarding, and push notifications. Everything else waits for 2.1.
+[00:01:18] Marcus Chen: I'm fine with onboarding and push, those are well understood. Offline mode is the big unknown. Read-only offline is easy, but if people can edit while offline we need conflict resolution when they come back online, and that's a real piece of work.
+[00:01:40] Priya Shah: Customers specifically asked for editing. Read-only doesn't solve the job site problem.
+[00:01:47] Marcus Chen: Understood. I just don't want to commit to a date before we've spiked it. Give me until Friday and I'll come back with an estimate for offline editing with sync.
+[00:01:58] Priya Shah: Deal. Friday works.
+[00:02:03] Tom Becker: From the QA side, offline is also the hardest to test. We'd need to simulate flaky networks, airplane mode, app being killed mid-sync. I'd want at least two weeks of dedicated testing for it.
+[00:02:20] Priya Shah: Noted. Let's talk dates. Sales would love something before the holidays. I was thinking December 8th.
+[00:02:29] Sam Okafor: December 8th works well for marketing. It gives us a week of press before people switch off for the holidays. If it slips past the 15th we basically lose the moment until January.
+[00:02:43] Marcus Chen: December 8th is tight but possible for onboarding and push. For offline I genuinely don't know yet.
+[00:02:51] Priya Shah: Then let's say this. We target December 8th as the launch date, and we revisit it next week once Marcus has the offline estimate. Everyone okay with that?
+[00:03:02] Elena Rossi: Yes.
+[00:03:03] Tom Becker: Works for me.
+[00:03:05] Sam Okafor: Yep.
+[00:03:08] Priya Shah: Great, so decision: target launch December 8th, scope is offline mode, onboarding, and push, to be confirmed with Dana.
+[00:03:20] Elena Rossi: On onboarding, I already have rough concepts. The main idea is to cut it from seven screens to three and ask for permissions only when you actually need them, not upfront.
+[00:03:34] Priya Shah: Love that. When can we see mockups?
+[00:03:38] Elena Rossi: I can have clickable mockups by November 10th. I'd also like to run a quick usability test with a few customers before we build anything.
+[00:03:47] Priya Shah: Please do. Let's make the usability test part of the plan.
+[00:03:52] Marcus Chen: For push notifications, one thing. We need to decide what we send. If we spam people they'll just turn it off.
+[00:04:01] Sam Okafor: Marketing would like a weekly digest notification.
+[00:04:05] Elena Rossi: I'd push back on that for launch. Let's start with transactional notifications only, things like a job being assigned to you or a comment on your report. Digest can come later.
+[00:04:16] Priya Shah: I agree with Elena. Transactional only for 2.0. Sam, is that okay?
+[00:04:21] Sam Okafor: Fine, as long as the digest is on the 2.1 list.
+[00:04:25] Priya Shah: It will be. Also, I'll check with legal about the consent wording for push, I remember they had opinions last time.
+[00:04:34] Tom Becker: Another thing, we only have four test devices and two of them are on very old Android versions. For 2.0 we really need more devices, especially mid-range Android.
+[00:04:45] Priya Shah: How many do you need?
+[00:04:47] Tom Becker: Ideally six more. I can put together a list.
+[00:04:51] Priya Shah: Send me the list and I'll get budget approval.
+[00:04:55] Sam Okafor: I'll draft the launch plan, press, blog post, in-app announcement, and share it before next week's sync.
+[00:05:03] Priya Shah: Perfect. Let me recap the action items. Marcus, offline mode estimate by Friday. Elena, clickable onboarding mockups by November 10th plus the usability test. Tom, the device list. Sam, the draft launch plan. And I'll take the legal question and get Dana's sign-off on scope.
+[00:05:24] Marcus Chen: One more risk to flag. Our payments SDK vendor emailed about deprecating the version we use. I haven't read the details yet.
+[00:05:32] Priya Shah: Can you look into it and bring it to the engineering sync?
+[00:05:35] Marcus Chen: Will do.
+[00:05:37] Priya Shah: Great. Thanks everyone.
