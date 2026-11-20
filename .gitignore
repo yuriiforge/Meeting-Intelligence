@@ -31,3 +31,6 @@ dist-ssr
 
 # Test output
 coverage
+
+# Generated Prisma client (rebuilt by `prisma generate` on install)
+apps/api/src/generated

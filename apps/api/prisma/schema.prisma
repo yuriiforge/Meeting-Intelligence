@@ -1,0 +1,77 @@
+// Data model for meetings, their transcripts, and the retrieval index.
+// The connection URL lives in prisma.config.ts (Prisma 7).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MeetingStatus {
+  PENDING // uploaded, not yet processed
+  PROCESSING // parsing, chunking, embedding
+  READY // searchable
+  FAILED // see Meeting.error
+}
+
+model Meeting {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  occurredAt      DateTime?     @map("occurred_at")
+  durationSeconds Int?          @map("duration_seconds")
+  sourceFilename  String?       @map("source_filename")
+  status          MeetingStatus @default(PENDING)
+  error           String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  utterances Utterance[]
+  chunks     Chunk[]
+
+  @@index([createdAt])
+  @@map("meetings")
+}
+
+/// One speaker turn from the transcript, e.g. "[00:12:34] Alice: ...".
+/// This is the source of truth for rendering the transcript and for citations.
+model Utterance {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meetingId    String @map("meeting_id") @db.Uuid
+  sequence     Int
+  speaker      String
+  startSeconds Int    @map("start_seconds")
+  text         String
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, sequence])
+  @@index([meetingId, speaker])
+  @@map("utterances")
+}
+
+/// A retrieval unit: consecutive whole utterances grouped to a token budget.
+/// Chunks never split a speaker turn, so every chunk maps back to exact lines.
+model Chunk {
+  id             String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meetingId      String                      @map("meeting_id") @db.Uuid
+  sequence       Int
+  content        String
+  speakers       String[]
+  startSeconds   Int                         @map("start_seconds")
+  endSeconds     Int                         @map("end_seconds")
+  tokenCount     Int                         @map("token_count")
+  /// 768 dims = nomic-embed-text. Changing models means re-embedding everything.
+  embedding      Unsupported("vector(768)")?
+  /// Recorded per row so a model/config mismatch can be detected at startup.
+  embeddingModel String?                     @map("embedding_model")
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, sequence])
+  @@map("chunks")
+}
