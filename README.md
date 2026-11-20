@@ -65,6 +65,51 @@ Schema: [`apps/api/prisma/schema.prisma`](apps/api/prisma/schema.prisma)
 To change the schema, edit `schema.prisma`, then run `npm run db:migrate`.
 That command creates and applies a new migration.
 
+## Transcripts
+
+Plain-text files (`.txt` or `.md`, UTF-8, up to 1 MB) with one speaker turn per line:
+
+```
+Title: Weekly sync          <- optional header (or "# Weekly sync")
+Date: 2026-11-03            <- optional header
+
+[00:00:04] Priya Shah: Okay, I think everyone's here.
+[00:00:19] Marcus Chen: Sounds good.
+  Lines without a timestamp continue the previous turn.
+```
+
+Timestamps can be `[hh:mm:ss]`, `[mm:ss]` or the same without brackets.
+Unparseable lines are skipped and reported as warnings in the upload response.
+A file with no speaker turns is rejected with `422`.
+
+[`samples/transcripts/`](samples/transcripts/) has four connected meetings of a
+fictional product team, useful for trying questions across meetings.
+
+### API
+
+| Method | Path                | What it does                                              |
+| ------ | ------------------- | --------------------------------------------------------- |
+| `POST` | `/api/meetings`     | Upload a transcript (multipart: `file`, optional `title`) |
+| `GET`  | `/api/meetings`     | List meetings, most recent first                          |
+| `GET`  | `/api/meetings/:id` | One meeting with its full transcript                      |
+| `GET`  | `/api/health`       | API and database health                                   |
+
+```bash
+curl -F "file=@samples/transcripts/2026-11-03-mobile-2-0-kickoff.txt" \
+  http://localhost:8080/api/meetings
+```
+
+## Tests
+
+| Suite       | Command                       | Needs             | Covers                               |
+| ----------- | ----------------------------- | ----------------- | ------------------------------------ |
+| Unit        | `npm test`                    | nothing           | Parser, chunker, config, controllers |
+| E2E         | `npm run test:e2e -w @mi/api` | nothing (fake DB) | HTTP stack, health                   |
+| Integration | `npm run test:int`            | `npm run db:up`   | Meetings API against real Postgres   |
+
+Integration tests use a separate `meeting_intelligence_test` database. It is
+created and migrated automatically and emptied before each test.
+
 ## Scripts
 
 | Command                       | What it does                        |
@@ -74,6 +119,7 @@ That command creates and applies a new migration.
 | `npm run lint`                | Lint both apps (oxlint)             |
 | `npm test`                    | Unit tests (Vitest)                 |
 | `npm run test:e2e -w @mi/api` | API end-to-end tests                |
+| `npm run test:int`            | Integration tests (needs Postgres)  |
 | `npm run format`              | Format everything with Prettier     |
 | `npm run docker:up`           | Build and run the full stack        |
 | `npm run docker:down`         | Stop the full stack                 |

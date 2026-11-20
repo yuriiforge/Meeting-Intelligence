@@ -64,6 +64,9 @@ model Chunk {
   speakers       String[]
   startSeconds   Int                         @map("start_seconds")
   endSeconds     Int                         @map("end_seconds")
+  /// Inclusive range of Utterance.sequence covered, for highlighting citations.
+  startUtterance Int                         @map("start_utterance")
+  endUtterance   Int                         @map("end_utterance")
   tokenCount     Int                         @map("token_count")
   /// 768 dims = nomic-embed-text. Changing models means re-embedding everything.
   embedding      Unsupported("vector(768)")?

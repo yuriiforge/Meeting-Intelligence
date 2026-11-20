@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
+import { configureApp } from './../src/app.setup.js';
 import { PrismaService } from './../src/prisma/prisma.service.js';
 
 // Boots the real HTTP stack with the database swapped for a fake, so this
@@ -23,8 +24,7 @@ describe('API (e2e)', () => {
       .useValue(prisma)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
+    app = configureApp(moduleFixture.createNestApplication());
     await app.init();
   });
 
