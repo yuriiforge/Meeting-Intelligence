@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock,
+  MessageCircleQuestion,
   RefreshCw,
   Search,
 } from 'lucide-react';
@@ -124,7 +125,20 @@ export function MeetingPage() {
           </div>
         )}
 
-        {meeting.status === 'READY' && <MeetingSearch meetingId={meeting.id} />}
+        {meeting.status === 'READY' && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <div className="min-w-0 flex-1">
+              <MeetingSearch meetingId={meeting.id} />
+            </div>
+            <Link
+              to={`/ask?meetingId=${meeting.id}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-on-accent hover:opacity-90"
+            >
+              <MessageCircleQuestion className="size-4" aria-hidden />
+              Ask about this meeting
+            </Link>
+          </div>
+        )}
       </header>
 
       <section className="mt-6 rounded-2xl border border-line bg-surface p-2 md:p-4">
@@ -149,7 +163,7 @@ function MeetingSearch({ meetingId }: { meetingId: string }) {
   }
 
   return (
-    <form role="search" onSubmit={submit} className="relative mt-4">
+    <form role="search" onSubmit={submit} className="relative">
       <Search
         className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint"
         aria-hidden

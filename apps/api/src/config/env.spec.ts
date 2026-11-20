@@ -13,6 +13,54 @@ describe('validateEnv', () => {
       EMBEDDING_PROVIDER: 'ollama',
       EMBEDDING_MODEL: 'nomic-embed-text',
       OLLAMA_BASE_URL: 'http://localhost:11434',
+      LLM_PROVIDER: 'ollama',
+      LLM_MODEL: 'qwen2.5:3b',
+      ANTHROPIC_EFFORT: 'medium',
+    });
+  });
+
+  describe('LLM provider', () => {
+    it('defaults the model per provider', () => {
+      const env = validateEnv({
+        DATABASE_URL,
+        LLM_PROVIDER: 'anthropic',
+        ANTHROPIC_API_KEY: 'sk-test',
+      });
+
+      expect(env.LLM_MODEL).toBe('claude-opus-5-5');
+    });
+
+    it('treats empty strings as unset', () => {
+      const env = validateEnv({
+        DATABASE_URL,
+        LLM_MODEL: '',
+        ANTHROPIC_API_KEY: '',
+      });
+
+      expect(env.LLM_MODEL).toBe('qwen2.5:3b');
+      expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+    });
+
+    it('keeps an explicit model', () => {
+      const env = validateEnv({ DATABASE_URL, LLM_MODEL: 'qwen2.5:7b' });
+
+      expect(env.LLM_MODEL).toBe('qwen2.5:7b');
+    });
+
+    it('requires credentials for Anthropic, at startup', () => {
+      expect(() =>
+        validateEnv({ DATABASE_URL, LLM_PROVIDER: 'anthropic' }),
+      ).toThrow(/ANTHROPIC_API_KEY: required when LLM_PROVIDER=anthropic/);
+    });
+
+    it('accepts an auth token instead of an API key', () => {
+      expect(() =>
+        validateEnv({
+          DATABASE_URL,
+          LLM_PROVIDER: 'anthropic',
+          ANTHROPIC_AUTH_TOKEN: 'token',
+        }),
+      ).not.toThrow();
     });
   });
 

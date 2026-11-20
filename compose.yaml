@@ -34,13 +34,20 @@ services:
       timeout: 5s
       retries: 20
 
-  # Downloads the embedding model into the shared volume once, then exits.
-  # Instant on later runs: the model is already there.
+  # Downloads the models into the shared volume once, then exits. Instant on
+  # later runs. The chat model is only pulled when answers come from Ollama.
   ollama-pull:
     image: ollama/ollama:0.40.16
     environment:
       OLLAMA_HOST: http://ollama:11434
-    command: ['pull', '${EMBEDDING_MODEL:-nomic-embed-text}']
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5:3b}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        ollama pull "$$EMBEDDING_MODEL" &&
+        if [ "$$LLM_PROVIDER" = ollama ]; then ollama pull "$$LLM_MODEL"; fi
     depends_on:
       ollama:
         condition: service_healthy
@@ -67,6 +74,12 @@ services:
       DATABASE_URL: *database-url
       OLLAMA_BASE_URL: http://ollama:11434
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      # Answers: local Ollama by default; set LLM_PROVIDER=anthropic and
+      # ANTHROPIC_API_KEY (in .env) to use Claude.
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_EFFORT: ${ANTHROPIC_EFFORT:-medium}
     depends_on:
       migrate:
         condition: service_completed_successfully

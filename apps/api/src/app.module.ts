@@ -1,6 +1,7 @@
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
+import { ChatModule } from './chat/chat.module.js';
 import { validateEnv } from './config/env.js';
 import { HealthController } from './health/health.controller.js';
 import { MeetingsModule } from './meetings/meetings.module.js';
@@ -13,6 +14,7 @@ import { RetrievalModule } from './retrieval/retrieval.module.js';
     PrismaModule,
     MeetingsModule,
     RetrievalModule,
+    ChatModule,
   ],
   controllers: [HealthController],
   providers: [

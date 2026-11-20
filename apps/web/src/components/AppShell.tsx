@@ -1,4 +1,12 @@
-import { AudioLines, Menu, Plus, Search, X } from 'lucide-react';
+import {
+  AudioLines,
+  LayoutGrid,
+  Menu,
+  MessageCircleQuestion,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { NavLink, Outlet, useNavigate, useSearchParams } from 'react-router';
 import { useMeetings } from '../api/hooks';
@@ -37,6 +45,30 @@ export function AppShell() {
             <X className="size-4" />
           </button>
         </div>
+
+        <nav aria-label="Main" className="space-y-0.5 px-2 pt-2">
+          {[
+            { to: '/ask', label: 'Ask', icon: MessageCircleQuestion },
+            { to: '/', label: 'Meetings', icon: LayoutGrid },
+          ].map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium ${
+                  isActive
+                    ? 'bg-accent-soft text-accent-ink'
+                    : 'hover:bg-raised'
+                }`
+              }
+            >
+              <Icon className="size-4" aria-hidden />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
 
         <div className="space-y-2 px-4 py-3">
           <SidebarSearch onSearch={() => setMenuOpen(false)} />
