@@ -6,6 +6,8 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 RUN npm ci -w @mi/web
 COPY apps/web apps/web
+# Bundled into the app for the "Load sample meetings" button.
+COPY samples samples
 RUN npm run build -w @mi/web
 
 FROM nginx:1.27-alpine AS runtime

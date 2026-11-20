@@ -1,33 +1,37 @@
-import { useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import { ApiError } from './api/client';
+import { AppShell } from './components/AppShell';
+import { HomePage } from './features/meetings/HomePage';
+import { MeetingPage } from './features/meetings/MeetingPage';
+import { SearchPage } from './features/search/SearchPage';
 
-type ApiStatus = 'checking' | 'ok' | 'unreachable';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Retry network hiccups and 5xx once; a 4xx won't change on retry.
+      retry: (failureCount, error) =>
+        failureCount < 1 && !(error instanceof ApiError && error.status < 500),
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-function App() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
+const router = createBrowserRouter([
+  {
+    element: <AppShell />,
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: 'meetings/:id', element: <MeetingPage /> },
+      { path: 'search', element: <SearchPage /> },
+    ],
+  },
+]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch('/api/health', { signal: controller.signal })
-      .then((res) => setApiStatus(res.ok ? 'ok' : 'unreachable'))
-      .catch((err: unknown) => {
-        if (!controller.signal.aborted) {
-          console.error('Health check failed', err);
-          setApiStatus('unreachable');
-        }
-      });
-
-    return () => controller.abort();
-  }, []);
-
+export default function App() {
   return (
-    <main className="app">
-      <h1>Meeting Intelligence</h1>
-      <p>
-        API status: <strong data-status={apiStatus}>{apiStatus}</strong>
-      </p>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
 }
-
-export default App;

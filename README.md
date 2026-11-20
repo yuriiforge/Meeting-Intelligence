@@ -9,7 +9,7 @@ Ask questions about meeting transcripts — discussions, decisions and action it
 ```
 apps/
   api/   NestJS backend (REST, /api prefix)
-  web/   React + Vite frontend
+  web/   React + Vite frontend (Tailwind, TanStack Query, React Router)
 ```
 
 npm workspaces; shared formatting config lives at the root.
@@ -24,7 +24,8 @@ Requires Docker.
 docker compose up --build
 ```
 
-Open http://localhost:8080. This starts, in order:
+Open http://localhost:8080 and click **Add meetings → Load 4 sample meetings**
+to try it with the bundled sample transcripts. This starts, in order:
 
 | Service       | What it is                                         | Host port |
 | ------------- | -------------------------------------------------- | --------- |
@@ -163,13 +164,28 @@ curl -F "file=@samples/transcripts/2026-11-03-mobile-2-0-kickoff.txt" \
   http://localhost:8080/api/meetings
 ```
 
+## UI
+
+- **Meetings**: library with status (queued, indexing, ready, failed). The
+  list polls while anything is indexing. A failed meeting shows the reason and
+  a retry button.
+- **Add meetings**: drag and drop several files, or load the bundled samples
+  in one click. Each file shows its result, including skipped lines.
+- **Meeting page**: speakers and a transcript grouped by speaker, with
+  timestamps that link to the exact moment.
+- **Search**: filters by meeting and speaker, and a hybrid / semantic /
+  keyword switch. Each result shows which retriever found it, and "Open in
+  transcript" highlights the exact lines.
+- Light and dark mode follow the system setting; the layout works on phones.
+
 ## Tests
 
-| Suite       | Command                       | Needs             | Covers                               |
-| ----------- | ----------------------------- | ----------------- | ------------------------------------ |
-| Unit        | `npm test`                    | nothing           | Parser, chunker, config, controllers |
-| E2E         | `npm run test:e2e -w @mi/api` | nothing (fake DB) | HTTP stack, health                   |
-| Integration | `npm run test:int`            | `npm run db:up`   | Meetings API against real Postgres   |
+| Suite       | Command                       | Needs                  | Covers                               |
+| ----------- | ----------------------------- | ---------------------- | ------------------------------------ |
+| Unit        | `npm test`                    | nothing                | Parser, chunker, config, controllers |
+| Web         | `npm test -w @mi/web`         | nothing (fetch mocked) | Components, formatting, highlighting |
+| E2E         | `npm run test:e2e -w @mi/api` | nothing (fake DB)      | HTTP stack, health                   |
+| Integration | `npm run test:int`            | `npm run db:up`        | Meetings API against real Postgres   |
 
 Integration tests use a separate `meeting_intelligence_test` database. It is
 created and migrated automatically and emptied before each test.

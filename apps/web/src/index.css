@@ -1,42 +1,66 @@
-:root {
-  --text: #3f3d45;
-  --bg: #ffffff;
-  --ok: #15803d;
-  --error: #b91c1c;
+@import 'tailwindcss';
 
-  font:
-    16px/1.5 system-ui,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+/*
+ * Semantic colour tokens. Components use these (bg-surface, text-muted, ...)
+ * instead of raw palette colours, so light and dark mode stay consistent.
+ */
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-raised: #f1f3f6;
+  --color-line: #e3e6eb;
+  --color-ink: #16181d;
+  --color-muted: #5f6672;
+  --color-faint: #8b919c;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eef0ff;
+  --color-accent-ink: #3730a3;
+  --color-on-accent: #ffffff;
+  --color-highlight: #fff4c2;
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-danger: #b91c1c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #e5e7eb;
-    --bg: #16171d;
-    --ok: #4ade80;
-    --error: #f87171;
+    --color-canvas: #0f1115;
+    --color-surface: #161920;
+    --color-raised: #1d2129;
+    --color-line: #2a2f3a;
+    --color-ink: #e8eaee;
+    --color-muted: #a2a8b3;
+    --color-faint: #737a86;
+    --color-accent: #8b8cf8;
+    --color-accent-soft: #23244a;
+    --color-accent-ink: #c7c8ff;
+    --color-on-accent: #0f1115;
+    --color-highlight: #4a3f12;
+    --color-ok: #4ade80;
+    --color-warn: #fbbf24;
+    --color-danger: #f87171;
   }
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body {
   margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-.app {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-[data-status='ok'] {
-  color: var(--ok);
-}
-
-[data-status='unreachable'] {
-  color: var(--error);
+mark {
+  background: var(--color-highlight);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
 }
