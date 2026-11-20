@@ -34,6 +34,15 @@ lines the answer was based on.
 
 ![Highlighted transcript lines](docs/screenshots/transcript-highlight.png)
 
+**Ask**: questions across all meetings or one, with suggested starting points.
+
+![Ask page](docs/screenshots/ask.png)
+
+**Answer in progress**: the retrieved excerpts are shown first, with meeting,
+date and timestamp, while the answer streams in.
+
+![Retrieved excerpts while the answer streams](docs/screenshots/ask-sources.png)
+
 ## Quick start
 
 ### Run everything in Docker
@@ -318,24 +327,155 @@ that the database matches `schema.prisma`.
 
 ## RAG and LLM decisions
 
-> TODO (author): write in your own words.
+**Chunking follows speakers.** A chunk is a run of whole speaker turns, about
+400 tokens, with about 80 tokens of overlap made of whole turns. Splitting a
+turn in half loses who said it, and in meetings "who said it" is often the
+answer. The overlap keeps a question and its reply together when they fall on
+a chunk boundary.
+
+**Utterances are the source of truth, chunks are only an index.** A chunk
+stores the range of turns it covers. A citation therefore resolves to exact
+lines and timestamps, not to a block of chunk text, which is what makes the
+"open the cited lines" view possible.
+
+**Hybrid retrieval, because each retriever fails differently.** Semantic search
+finds paraphrases but is weak on names, numbers and jargon ("SDK", "December
+15th"); full-text search is the opposite. Reciprocal rank fusion merges the two
+by rank, because their scores are on different scales. I measured instead of
+assuming: on 14 questions with known answers, hybrid reached 64% hit@1 and MRR
+0.80, against 50% / 0.73 for semantic and 57% / 0.72 for keyword alone. The
+keyword side OR-s the query words; AND-ing a natural-language question matched
+almost nothing.
+
+**Embeddings: `nomic-embed-text`, locally.** It is free, runs on CPU, and is
+good enough at this scale. Its task prefixes (`search_document:` /
+`search_query:`) are applied. Each vector stores the model that produced it,
+and the api refuses to start on a mismatch, because mixing vectors from two
+models silently breaks search.
+
+**Grounding is enforced in code, not only in the prompt.**
+
+- If retrieval finds nothing, the model isn't called at all. That is the
+  cheapest and most reliable way to avoid an invented answer.
+- Excerpts are numbered and the model must cite `[n]` after each fact. After
+  streaming, the citations are checked: numbers that match no excerpt are
+  reported and shown as unverified, and an answer without citations gets a
+  warning.
+- Transcript text is wrapped in `<excerpt>` blocks and the system prompt says
+  instructions inside them are quoted speech. A transcript is user content and
+  can contain "ignore previous instructions".
+
+**Two models, one code path.** The LLM sits behind a small provider interface.
+Development uses Ollama with `qwen2.5:3b`: free, no key, offline, but slow on
+CPU (40-55 s) and weaker on harder questions. Production uses Claude
+(`claude-opus-5-5` by default, `claude-sonnet-5-5` or `claude-haiku-5-5` to cut
+cost), chosen by environment variables. The small model was useful as a stress
+test of the prompt: it only cited sources reliably once the citation reminder
+moved to the end of the user message, and it copied an example sentence from
+the reminder into answers, so the reminder now shows only the format.
+
+**Streaming over SSE.** The sources are sent before the first token, so the UI
+shows what the answer will be based on while it is being written. SSE is
+one-directional and plain HTTP, which is all a chat answer needs, and it passes
+through nginx and Caddy with buffering turned off.
 
 ## Key technical decisions
 
-> TODO (author): write in your own words.
+- **Postgres + pgvector instead of a separate vector database.** One database
+  holds meetings, turns, vectors and the full-text index. Filters by meeting or
+  speaker run in the same query as the vector search, there is one thing to
+  back up, and at this scale a dedicated vector store would add operations
+  without adding capability.
+- **Full-text search in the same database.** A generated `tsvector` column with
+  a GIN index stays in sync automatically.
+- **Prisma 7.** A typed client and migrations. Its limits showed up around
+  vectors: vector queries are raw SQL, the generated column is declared with
+  `dbgenerated`, and HNSW indexes can't be expressed (Prisma would drop them in
+  the next migration). `npm run db:drift` checks that the database still
+  matches the schema.
+- **No HNSW index yet.** At this scale an exact scan takes milliseconds and
+  never misses. The index is a scaling step, not a day-one need.
+- **In-process indexing queue.** One job at a time, with state in the database
+  and unfinished jobs resumed at startup. That is enough for one instance
+  without adding Redis; several instances would need a real queue.
+- **Configuration validated at startup** with zod. A missing key or a typo fails
+  the start with a readable message instead of failing on the first request.
+- **Frontend:** React 19, TanStack Query (caching, and polling while meetings
+  index), React Router, Tailwind. Chat uses `fetch` with a small SSE parser,
+  because `EventSource` can't send a POST body.
+- **One-command Docker Compose.** Model downloads and migrations run as one-off
+  jobs, and the api starts only after both succeed, so `docker compose up`
+  works on a clean machine.
 
 ## Productionization
 
-> TODO (author): write in your own words.
+What is already in place:
+
+- the Claude provider, enabled by configuration, with the API key checked at
+  startup;
+- a single-VM deployment ([`deploy/`](deploy/)): automatic HTTPS, a password in
+  front of the app, internal ports closed, restart policies;
+- configuration validation, a health endpoint, and the embedding-model guard.
+
+What real users would need next, roughly in order:
+
+1. **Accounts and data isolation.** Today everyone shares one password and one
+   set of meetings. Transcripts are sensitive, so per-user or per-team access,
+   retention rules and deletion come first.
+2. **Cost and abuse limits.** Rate limiting per user and a spending cap on
+   model calls.
+3. **Hosted models.** Local models need 4-6 GB of RAM, which rules out small
+   instances and is why there is no live demo. In production I would use Claude
+   for answers and a hosted embedding API, which lets the app run on a small
+   instance with managed Postgres.
+4. **A real job queue** (pg-boss or BullMQ) once there is more than one api
+   instance.
+5. **Observability.** Structured logs, metrics, tracing, and token usage and
+   cost per request.
+6. **CI/CD** running lint, all test suites and the retrieval eval as a gate,
+   plus backups with tested restores and secrets in a secret manager.
+7. **Scale.** An HNSW index, and prompt caching for Claude.
 
 ## Engineering standards
 
-> TODO (author): write in your own words.
+- TypeScript in strict mode on both sides; oxlint and Prettier on everything.
+- Tests at four levels: unit (parser, chunker, prompts, citation checks,
+  config), web components, end-to-end HTTP, and integration tests on a real
+  Postgres with its own database, emptied before each test.
+- Models are replaced by deterministic fakes in tests, so the suites need no
+  network, no Ollama and no API key.
+- Retrieval quality is a test too: the eval fails if hybrid drops below its
+  floor. Ranking ties are broken deterministically so results are stable.
+- Small, focused commits, one step each (Conventional Commits style from the
+  first features on).
 
 ## AI tool usage
 
-> TODO (author): write in your own words.
+I built this with Claude Code as a pair programmer, working in small steps and
+committing each step myself after reviewing it. I made the main decisions:
+React + NestJS, Prisma, a local model for development with the real API as the
+production path, the scope of each step, and dropping paid hosting. Claude
+wrote most of the code, tests and documentation, including drafts of these
+README sections from my notes.
+
+I checked its work by running the stack, the tests and the retrieval eval, and
+by reviewing the UI in screenshots. That caught real mistakes: escaping bugs (a
+regex losing its backslashes, `$$` in the compose file), nondeterministic
+ranking ties, a prompt example that the small model copied into answers, and
+wrong free-tier limits for Oracle Cloud (4 OCPU / 24 GB instead of 2 / 12),
+which I corrected from Oracle's documentation.
 
 ## With more time
 
-> TODO (author): write in your own words.
+- **Answer-quality eval:** a fixed question set graded for correctness and
+  citation accuracy, to compare prompts and models with numbers, as the
+  retrieval eval does now.
+- **Run and tune the Claude path end to end** with a real key, and add prompt
+  caching.
+- **Structured extraction:** decisions and action items (owner, due date) per
+  meeting as their own views, and a timeline of how a decision changed across
+  meetings.
+- **Better retrieval:** a reranker after hybrid search, and a larger eval set.
+- **Audio upload** with transcription and speaker diarization.
+- **The production items above:** auth, limits, a job queue, observability, CI/CD.
+- **A live deployment** with hosted models.
